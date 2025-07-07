@@ -4,7 +4,9 @@
 <img src="https://github.com/Edgeberry/Edgeberry-HWCartridge-SenseAndDrive/blob/main/documentation/SenseAndDrive_Cartridge.png?raw=true" align="right" width="40%"/>
 </a>
 
-The **Freya System Actuators Driver** lorem ipsum ...
+The **Freya System Actuators Driver** Lorem ipsum... The control system has 6 sourcing digital outputs for interfacing with several types of actuators...
+
+
 
 <br clear="right"/>
 
