@@ -9,7 +9,7 @@
 const dbus = require('dbus-native');
 import { exec } from 'child_process';
 
-// Edgeberry Digital outputs
+// Edgeberry's Sense'n'Drive Hardware Cartridge Digital outputs
 const GPIO_LIGHTS="21";       // Digital out 1
 const GPIO_HEATER="20";       // Digital out 2
 const GPIO_RAIN="16";         // Digital out 3
@@ -18,7 +18,6 @@ const GPIO_TLIGHTS="18";      // Digital out 6 - Transitional lights
 
 /* DBus */
 const systemBus = dbus.systemBus();
-
 
 /* GPIO controls for the Sense'n'Drive Cartridge digital outputs */
 function setDigitalOutput( digitalOutput:string, state:string ){
