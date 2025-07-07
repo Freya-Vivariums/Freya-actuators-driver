@@ -1,70 +1,32 @@
 /*
- *  Freya Sensor Driver
+ *  Freya System Actuators Driver
  *  The hardware-dependent component of the Freya Vivarium Control System, designed
- *  for use with the Edgeberry hardware (Base Board + Sense'n'Drive hardware cartridge)
- *  and the Freya Sensor (v1).
+ *  for use with the Edgeberry hardware (Base Board + Sense'n'Drive hardware cartridge).
  *
  *  by Sanne 'SpuQ' Santens
  */
+
 const dbus = require('dbus-native');
-import i2c from 'i2c-bus';
-import BME680 from './bme680';
+import { exec } from 'child_process';
 
-// D-Bus configuration
-const SERVICE_NAME   = 'io.freya.EnvironmentSensorDriver';
-const OBJECT_PATH    = '/io/freya/EnvironmentSensorDriver';
-const INTERFACE_NAME = 'io.freya.EnvironmentSensorDriver';
-const SAMPLE_INTERVAL = 10*1000; // ms
+// Edgeberry Digital outputs
+const GPIO_LIGHTS="21";       // Digital out 1
+const GPIO_HEATER="20";       // Digital out 2
+const GPIO_RAIN="16";         // Digital out 3
+const GPIO_VENTILATION="12"   // Digital out 5
+const GPIO_TLIGHTS="18";      // Digital out 6 - Transitional lights
 
-// Initialize I2C and sensor
-const i2cBus = i2c.openSync(1);
-const sensor = new BME680(0x76, i2cBus);
-
-// Connect to system bus and claim service name
+/* DBus */
 const systemBus = dbus.systemBus();
-systemBus.requestName(SERVICE_NAME, 0, (err:any, retCode:any) => {
-  if (err) throw err;
-  if (retCode !== 1) {
-    console.error(`Name ${SERVICE_NAME} is taken, retCode=${retCode}`);
-    process.exit(1);
-  }
-  console.log(`Acquired D-Bus name: ${SERVICE_NAME}`);
-  exportInterface();
-});
 
-function exportInterface() {
-  const ifaceImpl = {
-    GetMeasurements: () => {
-      return readMeasurements();
-    },
-    MeasurementsUpdated: (_data: Record<string, number>) => {}
-  };
 
-  const ifaceDesc = {
-    name: INTERFACE_NAME,
-    methods: {
-      GetMeasurements: ['', 'a{d}', [], ['measurements']]
-    },
-    signals: {
-      MeasurementsUpdated: ['a{d}', ['measurements']]
+/* GPIO controls for the Sense'n'Drive Cartridge digital outputs */
+function setDigitalOutput( digitalOutput:string, state:string ){
+    const digitalState = state==='on'?'dh':'dl';
+    try{
+        exec("pinctrl set "+digitalOutput+" op "+digitalState);
     }
-  };
-
-  systemBus.exportInterface(ifaceImpl, OBJECT_PATH, ifaceDesc);
-  console.log(`Exported interface at ${OBJECT_PATH}`);
-
-  setInterval(() => {
-    const data = readMeasurements();
-    // @ts-ignore: emit signal
-    ifaceImpl.MeasurementsUpdated(data);
-    console.log('Emitted MeasurementsUpdated:', data);
-  }, SAMPLE_INTERVAL);
-}
-
-function readMeasurements(): Record<string, number> {
-  const temperature = sensor.getTemperature();
-  const humidity    = sensor.getHumidity();
-  const pressure    = sensor.getPressure();
-  const gas         = sensor.getGasResistance();
-  return { temperature, humidity, pressure, gas };
+    catch(e){
+        console.log("Failed to set Digital Output: "+e);
+    }
 }
