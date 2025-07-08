@@ -10,19 +10,29 @@
 const dbus = require('dbus-native');
 import { exec } from 'child_process';
 
-// DBus service
+// DBus service constants
 const DBUS_SERVICE = 'io.freya.SystemActuatorsDriver';
 const DBUS_PATH = '/io/freya/SystemActuatorsDriver';
 const DBUS_INTERFACE = 'io.freya.SystemActuatorsDriver';
-// Edgeberry's Sense'n'Drive Hardware Cartridge Digital outputs
-const DIGITAL_1="21";     // Digital out 1 - Main lights
-const DIGITAL_2="20";     // Digital out 2 - Heater
-const DIGITAL_3="16";     // Digital out 3 - Misting pump
-const DIGITAL_5="12";     // Digital out 5 - Ventialtion
-const DIGITAL_6="18";     // Digital out 6 - Auxilary lights
 
+// Edgeberry's Sense'n'Drive Hardware Cartridge Digital outputs mapping
+const channels = [
+  /* channel 1 */ 21, // Main lights
+  /* channel 2 */ 20, // Heater
+  /* channel 3 */ 16, // Misting pump
+  /* channel 4 */ 13, // (unused)
+  /* channel 5 */ 12, // Ventilation
+  /* channel 6 */ 18  // Auxiliary lights
+];
+
+// Connect to the system D-Bus
 const systemBus = dbus.systemBus();
 
+/**
+ *  init()
+ *  Initialize the driver: acquire DBus name and export interface,
+ *  Initialize all channels to digital low.
+ */
 async function init(){
     // Initialize our DBus service
     if(systemBus){
@@ -39,10 +49,17 @@ async function init(){
         console.error('\x1b[31mD-Bus client could not connect to system bus\x1b[30m');
         cleanup(1);
     }
+
+    // Turn all outputs off
+    setAllOutputsOff()
 }
 
 init();
 
+/**
+ *  cleanup()
+ *  Clean up resources; release D-Bus name and turn off all outputs.
+ */
 function cleanup(statuscode:number) {
     console.log('');
 
@@ -56,7 +73,7 @@ function cleanup(statuscode:number) {
     });
 
     // Turn all outputs off
-    // TODO!!!
+    setAllOutputsOff();
 
     // Clean exit
     process.exit(statuscode);
@@ -66,12 +83,10 @@ function cleanup(statuscode:number) {
  *  System events
  *
  */
-// catch the TERM signal (when the process is kindly requested to stop)
+// catch the system signals (when the process is kindly requested to stop)
 process.on('SIGTERM', ()=>cleanup(0));
-// (you can also catch SIGINT if you want: e.g. for ctrl-C in development)
 process.on('SIGINT', ()=>cleanup(0));
-
-// (optional) catch uncaught exceptions so you can clean up there too
+// catch uncaught exceptions so you can clean up there too
 process.on('uncaughtException', err => {
     console.error('Uncaught exception:', err);
     cleanup(1);
@@ -81,14 +96,18 @@ process.on('uncaughtException', err => {
  *  Actuator controls
  */
 
-// list of Digital Outputs of the Sense'n'Drive Cartridge,
-// in order (D1, ..., D6).
-const channels = [21,20,16,13,12,18]
 
-/* GPIO controls for the Sense'n'Drive Cartridge digital outputs */
+/* 
+ * SetDigitalOutput()
+ * Set a digital output channel of the Edgeberry Sense'n'Drive 
+ * Hardware Cartridge high or low via gpio-pinctrl
+ * @param channel Logical channel number (1-6)
+ * @param state   true = high / on, false = low / off
+ * @returns       true on success, false on failure or invalid channel
+ */
 function setDigitalOutput( channel:number, state:boolean ):boolean{
     // Check whether the Channel value is correct
-    if( channel <1 || channel >7){
+    if( channel <1 || channel >6){
         console.log("Digital output "+channel+" does not exist")
         return false;
     }
@@ -106,6 +125,19 @@ function setDigitalOutput( channel:number, state:boolean ):boolean{
     }
 }
 
+/* 
+ * SetAllOutputsOff()
+ * Turns all digital output channels of the Edgeberry Sense'n'Drive 
+ * Hardware Cartridge off
+ */
+function setAllOutputsOff(){
+    let i=1;
+    while( i <= 6){
+        setDigitalOutput( i, false);
+        i++;
+    }
+}
+
 /*
  *  DBus
  */
@@ -113,8 +145,8 @@ function setDigitalOutput( channel:number, state:boolean ):boolean{
 
 /* DBus service object */
 const serviceObject = {
-                        setDigitalOutput: (channel:number, state:boolean, callback:(err:Error|null,success:boolean)=>void)=>{
-                          callback( null, setDigitalOutput(channel, state) );
+                        setDigitalOutput: (channel:number, state:boolean)=>{
+                          return setDigitalOutput( channel, state );
                         },
                         emit: (signalName:string, ...otherParameters:any )=>{}
                       }
@@ -149,12 +181,13 @@ function registerDbusName():Promise<void>{
 function createDbusInterface(){
     systemBus.exportInterface( serviceObject, DBUS_PATH, {
         name: DBUS_INTERFACE,
-        methods: {
-            setDigitalOutput:['db','b'],
-            getDigitalOutput:['d','b']
+         methods: {
+            setDigitalOutput: [ 'ib', 'b' ],
+            getDigitalOutput: [ 'i',  'b' ]
         },
         signals: {
             updateActuator:['s']
         }
     });
+    console.log('D-Bus interface exported. Ready to accept calls.');
 }
