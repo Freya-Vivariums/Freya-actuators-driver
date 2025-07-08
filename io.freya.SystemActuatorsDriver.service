@@ -8,6 +8,7 @@ WorkingDirectory=/opt/Freya/hardware/actuators-driver
 Type=simple
 ExecStart=/usr/bin/node /opt/Freya/hardware/actuators-driver/build/index.js
 Restart=on-failure
+User=root
 
 [Install]
 WantedBy=multi-user.target
