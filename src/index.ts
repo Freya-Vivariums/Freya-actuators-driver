@@ -15,17 +15,35 @@ const DBUS_SERVICE = 'io.freya.SystemActuatorsDriver';
 const DBUS_PATH = '/io/freya/SystemActuatorsDriver';
 const DBUS_INTERFACE = 'io.freya.SystemActuatorsDriver';
 // Edgeberry's Sense'n'Drive Hardware Cartridge Digital outputs
-const GPIO_LIGHTS="21";       // Digital out 1
-const GPIO_HEATER="20";       // Digital out 2
-const GPIO_RAIN="16";         // Digital out 3
-const GPIO_VENTILATION="12"   // Digital out 5
-const GPIO_TLIGHTS="18";      // Digital out 6 - Transitional lights
+const DIGITAL_1="21";     // Digital out 1 - Main lights
+const DIGITAL_2="20";     // Digital out 2 - Heater
+const DIGITAL_3="16";     // Digital out 3 - Misting pump
+const DIGITAL_5="12";     // Digital out 5 - Ventialtion
+const DIGITAL_6="18";     // Digital out 6 - Auxilary lights
 
-/*
- *  System events
- *
- */
-function cleanup() {
+const systemBus = dbus.systemBus();
+
+async function init(){
+    // Initialize our DBus service
+    if(systemBus){
+        console.log('\x1b[32mD-Bus client connected to system bus\x1b[30m');
+        try{
+            await registerDbusName();
+            createDbusInterface();
+        }
+        catch(e){
+            cleanup(1);
+        }
+    }
+    else{
+        console.error('\x1b[31mD-Bus client could not connect to system bus\x1b[30m');
+        cleanup(1);
+    }
+}
+
+init();
+
+function cleanup(statuscode:number) {
     console.log('');
 
     // Release the D-Bus name (dbus-daemon will clean up on exit
@@ -41,18 +59,22 @@ function cleanup() {
     // TODO!!!
 
     // Clean exit
-    process.exit(0);
+    process.exit(statuscode);
 }
 
+/*
+ *  System events
+ *
+ */
 // catch the TERM signal (when the process is kindly requested to stop)
-process.on('SIGTERM', cleanup);
+process.on('SIGTERM', ()=>cleanup(0));
 // (you can also catch SIGINT if you want: e.g. for ctrl-C in development)
-process.on('SIGINT', cleanup);
+process.on('SIGINT', ()=>cleanup(0));
 
 // (optional) catch uncaught exceptions so you can clean up there too
 process.on('uncaughtException', err => {
     console.error('Uncaught exception:', err);
-    cleanup();
+    cleanup(1);
 });
 
 /*
@@ -73,15 +95,7 @@ function setDigitalOutput( digitalOutput:string, state:string ){
 /*
  *  DBus
  */
-const systemBus = dbus.systemBus();
-if(systemBus){
-    console.log('\x1b[32mD-Bus client connected to system bus\x1b[30m');
-    if(! registerDbusName() ) cleanup();    // no use to continue if we can't register our service name
-    createDbusInterface();
-}
-else{
-    console.warn('\x1b[31mD-Bus client could not connect to system bus\x1b[30m');
-}
+
 
 /* DBus service object */
 const serviceObject = {
@@ -91,17 +105,26 @@ const serviceObject = {
 /*
  *  Register D-Bus name
  */
-function registerDbusName(){
-    if(!systemBus) return false;
-    systemBus.requestName(DBUS_SERVICE,0, (err:string|null, res:number|null)=>{
-        if(err){
-            console.warn('\x1b[31mD-Bus service name aquisition failed: '+err+'\x1b[30m');
-            return false;
-        }
-            else if( res )
-            console.log('\x1b[32mD-Bus service name "'+DBUS_SERVICE+'" successfully aquired \x1b[30m');
-            return true;
+function registerDbusName():Promise<void>{
+    return new Promise((resolve, reject)=>{
+        // If we're not connected to the system DBus, don't even bother
+        // to continue...
+        if(!systemBus) return reject(new Error('No system bus available'));
+        // Request our DBus service name
+        systemBus.requestName(DBUS_SERVICE,0, (err:any, res:number)=>{
+            if(err){
+                console.warn('\x1b[31mD-Bus service name aquisition failed: '+err+'\x1b[30m');
+                return reject();
+            }
+            if( res !== 1){
+                console.warn('\x1b[31mUnexpected reply while requesting DBus service name: ' + res + '\x1b[30m');
+                return reject(new Error('Unexpected reply: ' + res));
+            }
+            else
+                console.log('\x1b[32mD-Bus service name "'+DBUS_SERVICE+'" successfully aquired \x1b[30m');
+                return resolve();
         });
+    })
 }
 
 /*
@@ -111,7 +134,8 @@ function createDbusInterface(){
     systemBus.exportInterface( DBUS_SERVICE, DBUS_PATH, {
         name: DBUS_INTERFACE,
         methods: {
-            setDigitalOutput:['s','']
+            setDigitalOutput:['s',''],
+            getDigitalOutput:['s','s']
         },
         signals: {
             updateActuator:['s']
