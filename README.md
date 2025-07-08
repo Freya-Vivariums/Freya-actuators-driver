@@ -35,7 +35,6 @@ sudo busctl introspect io.freya.SystemActuatorsDriver /io/freya/SystemActuatorsD
 For testing, you can also call methods using `busctl`, for example setting `Digital out 1` high:
 ```
 sudo busctl call io.freya.SystemActuatorsDriver /io/freya/SystemActuatorsDriver io.freya.SystemActuatorsDriver setDigitalOutput ib 1 true
-
 ```
 
 ## License & Collaboration
