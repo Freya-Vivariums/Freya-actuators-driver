@@ -9,10 +9,11 @@
 
 DEFAULT_USER=spuq
 DEFAULT_HOST=192.168.1.113
-APPNAME=Freya
-APPCOMP=HardwareInterface
+PROJECT=Freya
+COMPONENT=actuators-driver
+COMPONENTTYPE=hardware
 SERVICENAME="io.freya.SystemActuatorsDriver"
-APPDIR=/opt/${APPNAME}/${APPCOMP}
+APPDIR=/opt/${PROJECT}/${COMPONENTTYPE}/${COMPONENT}
 
 # Let's start with an empty terminal
 clear;
@@ -46,63 +47,72 @@ stty -echo
 echo ''
 echo ''
 
-# Create a directory on the device for copying the project to
-echo -e '\e[0;32mCreating temporary directory for the project... \e[m'
-sshpass -p ${PASSWORD} ssh -o StrictHostKeyChecking=no ${USER}@${HOST} "mkdir ~/temp"
+# Build the project locally
+npm run build
 
+# Uninstalling the previous version of the project
+echo -e '\e[0;32mUninstalling the previous version of the project... \e[m'
+sshpass -p ${PASSWORD} ssh -o StrictHostKeyChecking=no ${USER}@${HOST} << EOF
+    sudo su;
+    bash $APPDIR/uninstall.sh
+EOF
 
 # Copy the relevant project files to the device
 echo -e '\e[0;32mCopying project to device...\e[m'
-sshpass -p ${PASSWORD} scp -r ./src \
-                                ./package.json \
-                                ./tsconfig.json \
-                                ./webpack.config.js \
-                                ./io.freya.HardwareInterface.service \
-                                ./uninstall.sh \
-                                ${USER}@${HOST}:temp/
+sshpass -p ${PASSWORD} scp -r   ./package.json \
+                                ./build/ \
+                                ./config/io.freya.SystemActuatorsDriver.conf \
+                                ./config/io.freya.SystemActuatorsDriver.service \
+                                ./scripts/uninstall.sh \
+                                ${USER}@${HOST}:${APPDIR}
 
 # Install the application on remote device
 sshpass -p ${PASSWORD} ssh -o StrictHostKeyChecking=no ${USER}@${HOST} << EOF 
     sudo su
-    echo -e '\e[0;32mCreating project directory... \e[m'
-    mkdir -p $APPDIR
-    if [ $? -eq 0 ]; then
-        echo -e "\e[0;90mNot a new installation!\e[0m"
-        # ToDo: Backup certificate files etc
-    else
-        echo -e "\e[0;90mNew installation\e[0m";
-        exit 1;
-    fi
-
-    echo -e '\e[0;32mCopying project to project directory... \e[m'
-    cp -r ./temp/* $APPDIR
-    rm -rf ./temp
-
     echo -e '\e[0;32mInstalling project dependencies... \e[m'
     cd $APPDIR/
-    npm install --include=dev --verbose
+    npm install
+    if [ $? -eq 0 ]; then
+        echo -e "\e[0;32m[Success]\e[0m"
+    else
+        echo -e "\e[0;33m[Failed]\e[0m"
+    fi
 
-    # Install the Freya HardwareInterface systemd service
+    # Install the application's DBus configuration file
+    echo -e -n '\e[mInstalling DBus system configuration \e[m'
+    mv -f ${APPDIR}/${SERVICENAME}.conf /etc/dbus-1/system.d/
+    if [ $? -eq 0 ]; then
+        echo -e "\e[0;32m[Success]\e[0m"
+    else
+        echo -e "\e[0;33m[Failed]\e[0m"
+    fi
+    # Reloading the DBus system service
+    echo -e -n '\e[mRestarting the DBus system service \e[m'
+    systemctl reload dbus.service
+    if [ $? -eq 0 ]; then
+        echo -e "\e[0;32m[Success]\e[0m"
+    else
+        echo -e "\e[0;33m[Failed]\e[0m";
+    fi
+
+    # Install the systemd service
     echo -e -n '\e[mInstalling systemd service \e[m'
-    mv -f /opt/${APPNAME}/${APPCOMP}/io.freya.HardwareInterface.service /etc/systemd/system/
+    mv -f ${APPDIR}/${SERVICENAME}.service /etc/systemd/system/
     systemctl daemon-reload
     if [ $? -eq 0 ]; then
         echo -e "\e[0;32m[Success]\e[0m"
     else
         echo -e "\e[0;33m[Failed]\e[0m";
     fi
-    # Enable the Freya Hardware Interface for Edgeberry service to run on boot
+
+    # Enable the service to run on boot
     echo -e -n '\e[mEnabling service to run on boot \e[m'
-    systemctl enable io.freya.HardwareInterface
+    systemctl enable ${SERVICENAME}
     if [ $? -eq 0 ]; then
         echo -e "\e[m[Success]\e[0m"
     else
         echo -e "\e[0;33m[Failed]\e[0m";
     fi
-
-    echo -e '\e[0;32mBuilding the project... \e[m'
-    npm run build --verbose
-
 
     # (re)start application
     echo -e '\e[0;32mRestarting the application... \e[m'
