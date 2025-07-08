@@ -125,20 +125,20 @@ function registerDbusName():Promise<void>{
     return new Promise((resolve, reject)=>{
         // If we're not connected to the system DBus, don't even bother
         // to continue...
-        if(!systemBus) return reject(new Error('No system bus available'));
+        if(!systemBus) reject(new Error('No system bus available'));
         // Request our DBus service name
         systemBus.requestName(DBUS_SERVICE,0, (err:any, res:number)=>{
             if(err){
                 console.warn('\x1b[31mD-Bus service name aquisition failed: '+err+'\x1b[30m');
-                return reject();
+                reject();
             }
             if( res !== 1){
                 console.warn('\x1b[31mUnexpected reply while requesting DBus service name: ' + res + '\x1b[30m');
-                return reject(new Error('Unexpected reply: ' + res));
+                reject(new Error('Unexpected reply: ' + res));
             }
             else
                 console.log('\x1b[32mD-Bus service name "'+DBUS_SERVICE+'" successfully aquired \x1b[30m');
-                return resolve();
+                resolve();
         });
     })
 }
@@ -147,7 +147,7 @@ function registerDbusName():Promise<void>{
  *  Create D-Bus interface
  */
 function createDbusInterface(){
-    systemBus.exportInterface( DBUS_SERVICE, DBUS_PATH, {
+    systemBus.exportInterface( serviceObject, DBUS_PATH, {
         name: DBUS_INTERFACE,
         methods: {
             setDigitalOutput:['db','b'],
