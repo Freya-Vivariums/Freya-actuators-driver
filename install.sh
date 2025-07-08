@@ -12,7 +12,7 @@
 PROJECT=Freya
 COMPONENT=actuators-driver
 COMPONENTTYPE=hardware
-SYSTEMSERVICENAME=io.freya.SystemActuatorsDriver.service
+SYSTEMSERVICENAME=io.freya.SystemActuatorsDriver
 REPONAME=${PROJECT}-${COMPONENT}
 REPOOWNER=Freya-Vivariums
 APPDIR=/opt/${PROJECT}/${COMPONENTTYPE}/${COMPONENT}
@@ -169,9 +169,19 @@ fi
 # Cleanup the download
 rm -rf repo.tar.gz
 
+# Install the application's DBus configuration file
+echo -e -n '\e[mInstalling DBus system configuration \e[m'
+mv -f ${APPDIR}/${SYSTEMSERVICENAME}.conf 
+systemctl restart dbus.service
+if [ $? -eq 0 ]; then
+    echo -e "\e[0;32m[Success]\e[0m"
+else
+    echo -e "\e[0;33m[Failed]\e[0m";
+fi
+
 # Install the application's systemd service
 echo -e -n '\e[mInstalling systemd service \e[m'
-mv -f ${APPDIR}/${SYSTEMSERVICENAME} /etc/systemd/system/
+mv -f ${APPDIR}/${SYSTEMSERVICENAME}.service /etc/systemd/system/
 systemctl daemon-reload
 if [ $? -eq 0 ]; then
     echo -e "\e[0;32m[Success]\e[0m"
@@ -180,7 +190,7 @@ else
 fi
 # Enable the application's service to run on boot
 echo -e -n '\e[mEnabling systemd service to run on boot \e[m'
-systemctl enable ${SYSTEMSERVICENAME}
+systemctl enable ${SYSTEMSERVICENAME}.service
 if [ $? -eq 0 ]; then
     echo -e "\e[0;32m[Success]\e[0m"
 else
@@ -189,7 +199,7 @@ fi
 
 # Start the service
 echo -e -n '\e[mStarting the systemd service \e[m'
-systemctl start ${SYSTEMSERVICENAME}
+systemctl start ${SYSTEMSERVICENAME}.service
 if [ $? -eq 0 ]; then
     echo -e "\e[0;32m[Success]\e[0m"
 else
