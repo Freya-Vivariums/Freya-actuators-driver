@@ -81,11 +81,22 @@ process.on('uncaughtException', err => {
  *  Actuator controls
  */
 
+// list of Digital Outputs of the Sense'n'Drive Cartridge, in order.
+const channels = [21,20,16,13,12,18]
+
 /* GPIO controls for the Sense'n'Drive Cartridge digital outputs */
-function setDigitalOutput( digitalOutput:string, state:string ){
-    const digitalState = state==='on'?'dh':'dl';
+function setDigitalOutput( channel:number, state:boolean ){
+    // Check whether the Channel value is correct
+    if( channel <1 || channel >7){
+        console.log("Digital output "+channel+" does not exist")
+        return;
+    }
+    // Translate the channel number to the corresponding digital pin
+    const digitalPin = channels[channel];
+    // Translate the boolean state to the corresponding instruction
+    const digitalState = state?'dh':'dl';
     try{
-        exec("pinctrl set "+digitalOutput+" op "+digitalState);
+        exec("pinctrl set "+digitalPin+" op "+digitalState);
     }
     catch(e){
         console.warn("Failed to set Digital Output: "+e);
@@ -99,7 +110,7 @@ function setDigitalOutput( digitalOutput:string, state:string ){
 
 /* DBus service object */
 const serviceObject = {
-                        setDigitalOutput: (arg:string)=>setDigitalOutput(arg, 'test'),
+                        setDigitalOutput: (channel:number, state:boolean)=>setDigitalOutput(channel, state),
                         emit: (signalName:string, ...otherParameters:any )=>{}
                       }
 /*
@@ -134,8 +145,8 @@ function createDbusInterface(){
     systemBus.exportInterface( DBUS_SERVICE, DBUS_PATH, {
         name: DBUS_INTERFACE,
         methods: {
-            setDigitalOutput:['s',''],
-            getDigitalOutput:['s','s']
+            setDigitalOutput:['db','b'],
+            getDigitalOutput:['d','b']
         },
         signals: {
             updateActuator:['s']
