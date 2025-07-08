@@ -5,7 +5,8 @@
 #   Downloads and installs the latest version of the actuator driver
 #   component for the Freya Vivarium Control System project.
 #
-#   by Sanne 'SpuQ' Santens
+#   Copyright© 2025 Sanne “SpuQ” Santens
+#   Released under the MIT License (see LICENSE.txt)
 ##
 
 PROJECT=Freya
@@ -203,6 +204,6 @@ echo ""
 echo -e "The \033[1m${PROJECT} ${COMPONENT}\033[0m was successfully installed!"
 echo ""
 # Remove this script
-#rm -- "$0"
+rm -- "$0"
 
 exit 0;
