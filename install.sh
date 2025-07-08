@@ -177,9 +177,9 @@ if [ $? -eq 0 ]; then
 else
     echo -e "\e[0;33m[Failed]\e[0m"
 fi
-# Restarting the DBus system service
+# Reloading the DBus system service
 echo -e -n '\e[mRestarting the DBus system service \e[m'
-systemctl restart dbus.service
+systemctl reload dbus.service
 if [ $? -eq 0 ]; then
     echo -e "\e[0;32m[Success]\e[0m"
 else
