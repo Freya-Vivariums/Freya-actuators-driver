@@ -4,14 +4,12 @@
 <img src="https://github.com/Edgeberry/Edgeberry-HWCartridge-SenseAndDrive/blob/main/documentation/SenseAndDrive_Cartridge.png?raw=true" align="right" width="40%"/>
 </a>
 
-The **Freya System Actuators Driver** Lorem ipsum... The control system has 6 sourcing digital outputs for interfacing with several types of actuators...
-
-
+The **Freya Actuators Driver** is the output-control component of the Freya Vivarium Control System build with the [Edgeberry Sense’n’Drive Hardware Cartridge](https://github.com/Edgeberry/Edgeberry-HWCartridge-SenseAndDrive?tab=readme-ov-file). Exposed over D-Bus, it translates simple commands into dependable on/off and PWM signals.
 
 <br clear="right"/>
 
 ## Installation
-When installing the Freya system, the **sensor driver is automatically installed** with the rest of the system. For manual installation run these commands on your device:
+When installing the Freya system, the **system actuators driver is automatically installed** with the rest of the system. For manual installation run these commands on your device:
 
 ```
 wget -O install.sh https://github.com/Freya-Vivariums/Freya-actuators-driver/releases/latest/download/install.sh;
