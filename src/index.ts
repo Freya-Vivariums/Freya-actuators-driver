@@ -82,14 +82,15 @@ process.on('uncaughtException', err => {
  */
 
 // list of Digital Outputs of the Sense'n'Drive Cartridge, in order.
+
 const channels = [21,20,16,13,12,18]
 
 /* GPIO controls for the Sense'n'Drive Cartridge digital outputs */
-function setDigitalOutput( channel:number, state:boolean ){
+function setDigitalOutput( channel:number, state:boolean ):boolean{
     // Check whether the Channel value is correct
     if( channel <1 || channel >7){
         console.log("Digital output "+channel+" does not exist")
-        return;
+        return false;
     }
     // Translate the channel number to the corresponding digital pin
     const digitalPin = channels[channel-1];
@@ -97,9 +98,11 @@ function setDigitalOutput( channel:number, state:boolean ){
     const digitalState = state?'dh':'dl';
     try{
         exec("pinctrl set "+digitalPin+" op "+digitalState);
+        return true;
     }
     catch(e){
         console.warn("Failed to set Digital Output: "+e);
+        return false;
     }
 }
 
