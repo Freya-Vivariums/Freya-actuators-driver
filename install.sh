@@ -1,8 +1,9 @@
 #!/bin/bash
 
-
 ##
 #   Install.sh
+#   Downloads and installs the latest version of the actuator driver
+#   component for the Freya Vivarium Control System project.
 #
 #   by Sanne 'SpuQ' Santens
 ##
@@ -13,7 +14,6 @@ COMPONENTTYPE=hardware
 SYSTEMSERVICENAME=io.freya.SystemActuatorsDriver.service
 REPONAME=${PROJECT}-${COMPONENT}
 REPOOWNER=Freya-Vivariums
-
 APPDIR=/opt/${PROJECT}/${COMPONENTTYPE}/${COMPONENT}
 
 # Check if this script is running as root. If not, notify the user
@@ -24,11 +24,13 @@ if [ "$EUID" -ne 0 ]; then
     exit 1;
 fi
 
-# Start a clean screen
+# Continue with a clean screen
 clear;
 
 ##
-#   Install dependencies
+#   Dependencies
+#   Install system dependencies for this service
+#   and installation script to work correctly
 ##
 
 # Check for NodeJS. If it's not installed, install it.
@@ -83,24 +85,25 @@ else
     fi
 fi
 
-
 ##
 #   Application:
-#   Downloading the latest version from GitHub
+#   Look up and download the latest version from GitHub,
+#   then put all the required files in their right place
+#   to start the actual installation.
 ##
 
 # Check for the latest release of the application using the GitHub API
-echo -n -e "\e[0mGetting latest ${APPNAME} ${COMPONENT} release info \e[0m"
+echo -n -e "\e[0mGetting latest ${PROJECT} ${COMPONENT} release info \e[0m"
 latest_release=$(curl -H "Accept: application/vnd.github.v3+json" -s "https://api.github.com/repos/${REPOOWNER}/${REPONAME}/releases/latest")
 # Check if this was successful
 if [ -n "$latest_release" ]; then
     echo -e "\e[0;32m[Success]\e[0m"
 else
-    echo -e "\e[0;33mFailed to get latest ${APPNAME} ${COMPONENT} release info! Exit.\e[0m";
+    echo -e "\e[0;33mFailed to get latest ${PROJECT} ${COMPONENT} release info! Exit.\e[0m";
     exit 1;
 fi
 # Get the asset download URL from the release info
-echo -n -e "\e[0mGetting the latest ${APPNAME} ${COMPONENT} release download URL \e[0m"
+echo -n -e "\e[0mGetting the latest ${PROJECT} ${COMPONENT} release download URL \e[0m"
 #asset_url=$(echo "$latest_release" | jq -r `.assets[] | select(.name | test("${REPONAME}-v[0-9]+\\.[0-9]+\\.[0-9]+\\.tar\\.gz")) | .url`)
 # assume $REPONAME is already set, and you've downloaded "$latest_release" via GitHub API
 asset_url=$(
@@ -197,7 +200,7 @@ fi
 #   Finish installation
 ##
 echo ""
-echo -e "The ${PROJECT} ${COMPONENT} was successfully installed!"
+echo -e "The \033[1m${PROJECT} ${COMPONENT}\033[0m was successfully installed!"
 echo ""
 # Remove this script
 #rm -- "$0"
