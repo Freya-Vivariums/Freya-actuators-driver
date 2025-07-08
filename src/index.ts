@@ -81,8 +81,8 @@ process.on('uncaughtException', err => {
  *  Actuator controls
  */
 
-// list of Digital Outputs of the Sense'n'Drive Cartridge, in order.
-
+// list of Digital Outputs of the Sense'n'Drive Cartridge,
+// in order (D1, ..., D6).
 const channels = [21,20,16,13,12,18]
 
 /* GPIO controls for the Sense'n'Drive Cartridge digital outputs */
