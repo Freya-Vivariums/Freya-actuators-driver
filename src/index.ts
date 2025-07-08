@@ -21,6 +21,44 @@ const GPIO_RAIN="16";         // Digital out 3
 const GPIO_VENTILATION="12"   // Digital out 5
 const GPIO_TLIGHTS="18";      // Digital out 6 - Transitional lights
 
+/*
+ *  System events
+ *
+ */
+function cleanup() {
+    console.log('');
+
+    // Release the D-Bus name (dbus-daemon will clean up on exit
+    // anyway, but it’s polite to do so ourselfs):
+    systemBus.releaseName(DBUS_SERVICE, (err:any) => {
+        if (err)
+            console.warn('Failed to release bus name:', err);
+        else
+            console.log(`Released D-Bus name "${DBUS_SERVICE}"`);
+    });
+
+    // Turn all outputs off
+    // TODO!!!
+
+    // Clean exit
+    process.exit(0);
+}
+
+// catch the TERM signal (when the process is kindly requested to stop)
+process.on('SIGTERM', cleanup);
+// (you can also catch SIGINT if you want: e.g. for ctrl-C in development)
+process.on('SIGINT', cleanup);
+
+// (optional) catch uncaught exceptions so you can clean up there too
+process.on('uncaughtException', err => {
+    console.error('Uncaught exception:', err);
+    cleanup();
+});
+
+/*
+ *  Actuator controls
+ */
+
 /* GPIO controls for the Sense'n'Drive Cartridge digital outputs */
 function setDigitalOutput( digitalOutput:string, state:string ){
     const digitalState = state==='on'?'dh':'dl';
@@ -32,7 +70,9 @@ function setDigitalOutput( digitalOutput:string, state:string ){
     }
 }
 
-/* DBus */
+/*
+ *  DBus
+ */
 const systemBus = dbus.systemBus();
 if(systemBus){
     console.log('\x1b[32mD-Bus client connected to system bus\x1b[30m');
@@ -42,8 +82,6 @@ if(systemBus){
 else{
     console.log('\x1b[31mD-Bus client could not connect to system bus\x1b[30m');
 }
-
-
 
 /* DBus service object */
 const serviceObject = {
