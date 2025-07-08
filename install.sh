@@ -171,7 +171,14 @@ rm -rf repo.tar.gz
 
 # Install the application's DBus configuration file
 echo -e -n '\e[mInstalling DBus system configuration \e[m'
-mv -f ${APPDIR}/${SYSTEMSERVICENAME}.conf 
+mv -f ${APPDIR}/${SYSTEMSERVICENAME}.conf /etc/dbus-1/system.d/
+if [ $? -eq 0 ]; then
+    echo -e "\e[0;32m[Success]\e[0m"
+else
+    echo -e "\e[0;33m[Failed]\e[0m"
+fi
+# Restarting the DBus system service
+echo -e -n '\e[mRestarting the DBus system service \e[m'
 systemctl restart dbus.service
 if [ $? -eq 0 ]; then
     echo -e "\e[0;32m[Success]\e[0m"

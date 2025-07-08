@@ -12,7 +12,7 @@
 PROJECT=Freya
 COMPONENT=actuators-driver
 COMPONENTTYPE=hardware
-SYSTEMSERVICENAME=io.freya.SystemActuatorsDriver.service
+SYSTEMSERVICENAME=io.freya.SystemActuatorsDriver
 APPDIR=/opt/${PROJECT}/${COMPONENTTYPE}/${COMPONENT}
 
 # Check if this script is running as root. If not, notify the user
@@ -30,9 +30,25 @@ clear;
 #   Service teardown
 ##
 
+# Remove the DBus config file
+rm /etc/dbus-1/system.d/${SYSTEMSERVICENAME}.conf
+if [ $? -eq 0 ]; then
+    echo -e "\e[0;32m[Success]\e[0m"
+else
+    echo -e "\e[0;33m[Failed]\e[0m"
+fi
+# Restarting the DBus system service
+echo -e -n '\e[mRestarting the DBus system service \e[m'
+systemctl restart dbus.service
+if [ $? -eq 0 ]; then
+    echo -e "\e[0;32m[Success]\e[0m"
+else
+    echo -e "\e[0;33m[Failed]\e[0m";
+fi
+
 # Stop the systemd service
 echo -n -e "\e[0mStopping systemd service \e[0m"
-systemctl stop ${SYSTEMSERVICENAME} >/dev/null 2>&1
+systemctl stop ${SYSTEMSERVICENAME}.service >/dev/null 2>&1
 if [ $? -eq 0 ]; then
     echo -e "\e[0;32m[Success]\e[0m"
 else
@@ -41,7 +57,7 @@ fi
 
 # Disable the service on boot
 echo -n -e "\e[0mDisabling systemd service on boot \e[0m"
-systemctl disable ${SYSTEMSERVICENAME} >/dev/null 2>&1
+systemctl disable ${SYSTEMSERVICENAME}.service >/dev/null 2>&1
 if [ $? -eq 0 ]; then
     echo -e "\e[0;32m[Success]\e[0m"
 else
@@ -50,7 +66,7 @@ fi
 
 # Remove the service file
 echo -n -e "\e[0mRemoving systemd service file \e[0m"
-rm -f /etc/systemd/system/${SYSTEMSERVICENAME} >/dev/null 2>&1
+rm -f /etc/systemd/system/${SYSTEMSERVICENAME}.service >/dev/null 2>&1
 systemctl daemon-reload >/dev/null 2>&1
 if [ $? -eq 0 ]; then
     echo -e "\e[0;32m[Success]\e[0m"
