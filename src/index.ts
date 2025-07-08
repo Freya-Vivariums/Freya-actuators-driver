@@ -92,7 +92,7 @@ function setDigitalOutput( channel:number, state:boolean ){
         return;
     }
     // Translate the channel number to the corresponding digital pin
-    const digitalPin = channels[channel];
+    const digitalPin = channels[channel-1];
     // Translate the boolean state to the corresponding instruction
     const digitalState = state?'dh':'dl';
     try{
