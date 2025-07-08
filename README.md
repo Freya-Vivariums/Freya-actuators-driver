@@ -30,7 +30,10 @@ journalctl -u io.freya.SystemActuatorsDriver.service -f
 ```
 
 ## Application programming
-The Freya System Actuators Driver uses `DBus` to interact with applications.
+The Freya System Actuators Driver uses `DBus` to interact with applications. You can check the DBus object path’s interfaces, methods, properties and signals using `busctl`:
+```
+sudo busctl introspect io.freya.SystemActuatorsDriver /io/freya/SystemActuatorsDriver io.freya.SystemActuatorsDriver
+```
 
 ## License & Collaboration
 **Copyright© 2025 Sanne 'SpuQ' Santens**. The Freya System Actuators Driver project is licensed under the **[MIT License](LICENSE.txt)**. The [Rules & Guidelines](https://github.com/Freya-Vivariums/.github/blob/main/brand/Freya_Trademark_Rules_and_Guidelines.md) apply to the usage of the Freya Vivariums™ brand.
