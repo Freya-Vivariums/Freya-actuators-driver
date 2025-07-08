@@ -32,6 +32,11 @@ The Freya System Actuators Driver uses `DBus` to interact with applications. You
 ```
 sudo busctl introspect io.freya.SystemActuatorsDriver /io/freya/SystemActuatorsDriver io.freya.SystemActuatorsDriver
 ```
+For testing, you can also call methods using `busctl`, for example setting `Digital out 1` high:
+```
+sudo busctl call io.freya.SystemActuatorsDriver /io/freya/SystemActuatorsDriver io.freya.SystemActuatorsDriver setDigitalOutput ib 1 true
+
+```
 
 ## License & Collaboration
 **Copyright© 2025 Sanne 'SpuQ' Santens**. The Freya System Actuators Driver project is licensed under the **[MIT License](LICENSE.txt)**. The [Rules & Guidelines](https://github.com/Freya-Vivariums/.github/blob/main/brand/Freya_Trademark_Rules_and_Guidelines.md) apply to the usage of the Freya Vivariums™ brand.
