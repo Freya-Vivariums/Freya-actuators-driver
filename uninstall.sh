@@ -78,7 +78,5 @@ fi
 echo ""
 echo -e "The \033[1m${PROJECT} ${COMPONENT}\033[0m was successfully uninstalled!"
 echo ""
-# Remove this script
-rm -- "$0"
 
 exit 0;
