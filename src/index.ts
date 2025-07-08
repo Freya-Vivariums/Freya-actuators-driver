@@ -3,7 +3,8 @@
  *  The hardware-dependent component of the Freya Vivarium Control System, designed
  *  for use with the Edgeberry hardware (Base Board + Sense'n'Drive hardware cartridge).
  *
- *  by Sanne 'SpuQ' Santens
+ *  Copyright© 2025 Sanne “SpuQ” Santens
+ *  Released under the MIT License (see LICENSE.txt)
  */
 
 const dbus = require('dbus-native');
