@@ -66,7 +66,7 @@ function setDigitalOutput( digitalOutput:string, state:string ){
         exec("pinctrl set "+digitalOutput+" op "+digitalState);
     }
     catch(e){
-        console.log("Failed to set Digital Output: "+e);
+        console.warn("Failed to set Digital Output: "+e);
     }
 }
 
@@ -76,11 +76,11 @@ function setDigitalOutput( digitalOutput:string, state:string ){
 const systemBus = dbus.systemBus();
 if(systemBus){
     console.log('\x1b[32mD-Bus client connected to system bus\x1b[30m');
-    registerDbusName();
+    if(! registerDbusName() ) cleanup();    // no use to continue if we can't register our service name
     createDbusInterface();
 }
 else{
-    console.log('\x1b[31mD-Bus client could not connect to system bus\x1b[30m');
+    console.warn('\x1b[31mD-Bus client could not connect to system bus\x1b[30m');
 }
 
 /* DBus service object */
@@ -95,7 +95,7 @@ function registerDbusName(){
     if(!systemBus) return false;
     systemBus.requestName(DBUS_SERVICE,0, (err:string|null, res:number|null)=>{
         if(err){
-            console.log('\x1b[31mD-Bus service name aquisition failed: '+err+'\x1b[30m');
+            console.warn('\x1b[31mD-Bus service name aquisition failed: '+err+'\x1b[30m');
             return false;
         }
             else if( res )
