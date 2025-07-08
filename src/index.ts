@@ -113,7 +113,9 @@ function setDigitalOutput( channel:number, state:boolean ):boolean{
 
 /* DBus service object */
 const serviceObject = {
-                        setDigitalOutput: (channel:number, state:boolean)=>setDigitalOutput(channel, state),
+                        setDigitalOutput: (channel:number, state:boolean, callback:(err:Error|null,success:boolean)=>void)=>{
+                          callback( null, setDigitalOutput(channel, state) );
+                        },
                         emit: (signalName:string, ...otherParameters:any )=>{}
                       }
 /*
